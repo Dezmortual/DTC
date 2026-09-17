@@ -86,8 +86,8 @@ MTF_EMA_SLOW     = 50
 POLL_SECONDS          = int(os.environ.get("DTC_POLL_SECONDS", "60"))
 BOOT_DELAY            = int(os.environ.get("DTC_BOOT_DELAY", "30"))
 FETCH_TIMEOUT_S       = 20          # hard bound on any single data fetch (covers DNS)
-WATCHDOG_STALE_S      = 20 * 60     # kick a cycle if none finished in this long
-WATCHDOG_THROTTLE_S   = 120
+WATCHDOG_STALE_S      = 5 * 60      # kick a cycle if none finished in this long
+WATCHDOG_THROTTLE_S   = 20          # how often a web request is allowed to trigger the check
 CANDLE_HISTORY        = 300
 MTF_REFRESH_S         = 600
 
@@ -693,7 +693,7 @@ def health():
         "mode": MODE,
         "symbol": SYMBOL,
         "timeframe": TIMEFRAME,
-        "loop_alive": (time.time() - _LOOP_HB) < max(600, POLL_SECONDS * 10),
+        "loop_alive": (time.time() - _LOOP_HB) < max(WATCHDOG_STALE_S + 60, POLL_SECONDS * 6),
         "cycle_running": _cycle_running,
         "data_feed": STATE.get("data_feed_status"),
         "last_cycle_age_s": int(time.time() - STATE.get("last_cycle_ts", 0)),
@@ -729,7 +729,7 @@ def api_status():
             "max_position_usdt": MAX_POSITION_USDT, "kill_switch": KILL_SWITCH,
             "daily_brake_pct": DAILY_LOSS_BRAKE_PCT,
         },
-        "loop_alive": (time.time() - _LOOP_HB) < max(600, POLL_SECONDS * 10),
+        "loop_alive": (time.time() - _LOOP_HB) < max(WATCHDOG_STALE_S + 60, POLL_SECONDS * 6),
     }
     payload["recent_trades"] = trades[-20:][::-1]
     return jsonify(payload)
