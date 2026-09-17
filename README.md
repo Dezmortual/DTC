@@ -48,17 +48,21 @@ python app.py
 ## Deploy to Render (same pattern as your other bots)
 
 1. Push this repo to GitHub (all files are in the repo root — `app.py`,
-   `requirements.txt`, `README.md`, `render.yaml`).
+   `requirements.txt`, `README.md`, `Procfile`).
 2. Render → New → Web Service → connect the repo.
    - Build command: `pip install -r requirements.txt`
    - Start command: `gunicorn --workers 1 --threads 4 --timeout 60 --bind 0.0.0.0:$PORT app:app`
-3. Add a **keep-alive pinger** (UptimeRobot or cron-job.org, every 10 minutes) hitting
+3. In the Render dashboard check **Settings → Start Command** contains the gunicorn
+   command above (NOT "render.yaml" — the repo no longer ships a render.yaml file;
+   if your service was created with it, clear it and paste the gunicorn command).
+4. Add a **keep-alive pinger** (UptimeRobot or cron-job.org, every 10 minutes) hitting
    `https://YOUR-APP.onrender.com/health`. On the free tier Render sleeps idle web
    services — the pinger plus the built-in watchdog keeps the engine trading.
    (The bot is hardened for this: cycles run in generations with hard-bounded data
    fetches, so a stalled cycle can never freeze the engine, dashboard, or /api/run-now.)
 
-`render.yaml` is included, so Render auto-fills the build/start commands.
+A `Procfile` is included so Render auto-detects the start command; the dashboard's
+Start Command always wins, so set it there if in doubt.
 
 ## Environment variables
 
@@ -79,7 +83,8 @@ python app.py
 
 ## Endpoints
 
-- `/` — dashboard (auto-refreshes every 10s)
+- `/` — premium dashboard (auto-refreshes every 10s): equity curve, price chart with
+  entry/SL/TP overlays, TP progress ladders, MTF trend grid, signal & trade history
 - `/health` — keep-alive / status check
 - `/api/status` — full bot state as JSON
 - `/api/run-now` — force a trading cycle immediately
